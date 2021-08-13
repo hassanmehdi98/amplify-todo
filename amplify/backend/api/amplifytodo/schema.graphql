@@ -1,0 +1,29 @@
+type Todo
+    @model
+    @auth(rules: [{ allow: owner }])
+    @key(
+        name: "ByPriority"
+        fields: ["type", "priority"]
+        queryField: "listTodosByPriority"
+    ) {
+    id: ID!
+    todo: String!
+    priority: Priority!
+    type: String!
+}
+
+enum Priority {
+    HIGH
+    NORMAL
+}
+
+type UpdateItemResult {
+    id: String
+    todo: String
+    priority: String
+}
+
+type Mutation {
+    updateItem(id: String!, todo: String, priority: Priority): UpdateItemResult
+        @function(name: "amplifytodoUpdateItem-${env}")
+}

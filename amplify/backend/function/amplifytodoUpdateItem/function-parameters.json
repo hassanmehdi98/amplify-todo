@@ -1,0 +1,10 @@
+{
+  "lambdaLayers": [],
+  "permissions": {
+    "storage": {
+      "Todo:@model(appsync)": [
+        "update"
+      ]
+    }
+  }
+}
