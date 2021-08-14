@@ -1,4 +1,3 @@
-import { AmplifySignOut } from "@aws-amplify/ui-react";
 import React, { useEffect, useState } from "react";
 import {
     createTodoQuery,
@@ -10,7 +9,7 @@ import {
     updateTodoSubscription,
 } from "../../utils/amplifyUtils";
 import TodoList from "./TodoList";
-import { Auth } from "aws-amplify";
+import { Auth, Hub } from "aws-amplify";
 import { Priority, SortDirection } from "../../constants";
 
 const Todo = (props) => {
@@ -116,6 +115,18 @@ const Todo = (props) => {
         }
     };
 
+    const handleSignOut = async () => {
+        try {
+            await Auth.signOut();
+            Hub.dispatch("UI Auth", {
+                event: "AuthStateChange",
+                message: "signedout",
+            });
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setRequestSubmitting(true);
@@ -154,9 +165,12 @@ const Todo = (props) => {
     return (
         <div className="container container-fluid">
             <div className="row mb-4">
-                <div className="col-md-12 text-center bg-light">
+                <div className="col-md-12 text-center bg-light d-flex justify-content-between align-items-center mt-2">
+                    <div></div>
                     <h2>Amplify Todo App</h2>
-                    <AmplifySignOut className="btn btn-danger btn-sm" />
+                    <button className="btn btn-danger" onClick={handleSignOut}>
+                        <i className="fa fa-power-off mr-1"></i> Logout
+                    </button>
                 </div>
             </div>
             <form onSubmit={handleSubmit}>
