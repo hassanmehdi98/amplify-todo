@@ -1,4 +1,4 @@
-import { API, graphqlOperation } from "aws-amplify";
+import Amplify, { API, Auth, graphqlOperation, Hub } from "aws-amplify";
 import { Priority } from "../constants";
 import { createTodo, deleteTodo, updateItem } from "../graphql/mutations";
 import { listTodos, listTodosByPriority } from "../graphql/queries";
@@ -7,6 +7,15 @@ import {
     onDeleteTodo,
     onUpdateTodo,
 } from "../graphql/subscriptions";
+import awsExports from "../aws-exports";
+
+export const initializeAmplify = () => {
+    Amplify.configure(awsExports);
+};
+
+export const getCurrentUser = () => {
+    return Auth.currentAuthenticatedUser();
+};
 
 export const getSortedTodoListingByPriorityQuery = (sortDirection) => {
     return API.graphql(
@@ -68,5 +77,13 @@ export const deleteTodoSubscription = (owner, cb) => {
             const todo = data.value.data.onDeleteTodo;
             cb(todo);
         },
+    });
+};
+
+export const signOut = async () => {
+    await Auth.signOut();
+    Hub.dispatch("UI Auth", {
+        event: "AuthStateChange",
+        message: "signedout",
     });
 };

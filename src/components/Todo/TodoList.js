@@ -1,14 +1,26 @@
 import React from "react";
+import { ListGroup, Spinner } from "reactstrap";
 import TodoListItem from "./TodoListItem";
 
 const TodoList = (props) => {
     const { data, onDelete, onSelectionChange, fetching } = props;
-    return fetching ? (
+
+    const renderLoader = () => (
         <div className="text-center">
-            <div className="spinner-border text-primary" role="status"></div>
+            <Spinner color="primary" />
         </div>
+    );
+
+    const renderNoTodosText = () => (
+        <div className="text-center">
+            <p>No todos created yet.</p>
+        </div>
+    );
+
+    return fetching ? (
+        renderLoader()
     ) : data?.length ? (
-        <ul className="list-group">
+        <ListGroup>
             {data.map((item) => (
                 <TodoListItem
                     key={item.id}
@@ -19,11 +31,9 @@ const TodoList = (props) => {
                     onDelete={onDelete}
                 />
             ))}
-        </ul>
+        </ListGroup>
     ) : (
-        <div className="text-center">
-            <p>No todos created yet.</p>
-        </div>
+        renderNoTodosText()
     );
 };
 

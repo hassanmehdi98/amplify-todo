@@ -4,13 +4,15 @@ import {
     createTodoSubscription,
     deleteTodoQuery,
     deleteTodoSubscription,
+    getCurrentUser,
     getSortedTodoListingByPriorityQuery,
+    signOut,
     updateTodoQuery,
     updateTodoSubscription,
 } from "../../utils/amplifyUtils";
 import TodoList from "./TodoList";
-import { Auth, Hub } from "aws-amplify";
 import { Priority, SortDirection } from "../../constants";
+import { Button, Col, Container, Form, Input, Row } from "reactstrap";
 
 const Todo = (props) => {
     const [todoText, setTodoText] = useState("");
@@ -19,6 +21,7 @@ const Todo = (props) => {
     const [fetching, setFetching] = useState(false);
     const [requestSubmitting, setRequestSubmitting] = useState(false);
     const [priority, setPriority] = useState(Priority.NORMAL);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const [user, setUser] = useState(null);
 
@@ -92,17 +95,27 @@ const Todo = (props) => {
     };
 
     const getUser = async () => {
-        const user = await Auth.currentAuthenticatedUser();
+        const user = await getCurrentUser();
         setUser(user);
     };
 
-    const getPriorityList = () => {
+    const renderPriorityOptionsList = () => {
         return Object.keys(Priority).map((key) => (
             <option key={key} value={Priority[key]}>
                 {key}
             </option>
         ));
     };
+
+    const renderButtonLoader = () => (
+        <span
+            className="spinner-border spinner-border-sm"
+            role="status"
+            aria-hidden="true"
+        ></span>
+    );
+
+    const isEditMode = () => (selectedTodoId ? true : false);
 
     const handleTodoTextChange = (e) => setTodoText(e.target.value);
     const handlePriorityChange = (e) => setPriority(e.target.value);
@@ -116,14 +129,13 @@ const Todo = (props) => {
     };
 
     const handleSignOut = async () => {
+        setIsLoggingOut(true);
         try {
-            await Auth.signOut();
-            Hub.dispatch("UI Auth", {
-                event: "AuthStateChange",
-                message: "signedout",
-            });
+            await signOut();
         } catch (err) {
             console.log(err);
+        } finally {
+            setIsLoggingOut(false);
         }
     };
 
@@ -163,59 +175,66 @@ const Todo = (props) => {
     };
 
     return (
-        <div className="container container-fluid">
-            <div className="row mb-4">
-                <div className="col-md-12 text-center bg-light d-flex justify-content-between align-items-center mt-2">
+        <Container>
+            <Row className="mb-4">
+                <Col
+                    xs="12"
+                    className="text-center bg-light d-flex justify-content-between align-items-center mt-2"
+                >
                     <div></div>
                     <h2>Amplify Todo App</h2>
-                    <button className="btn btn-danger" onClick={handleSignOut}>
-                        <i className="fa fa-power-off mr-1"></i> Logout
-                    </button>
-                </div>
-            </div>
-            <form onSubmit={handleSubmit}>
-                <div className="row mb-4">
-                    <div className="col-md-8">
-                        <input
-                            className="form-control"
-                            type="text"
-                            placeholder="Enter todo task..."
+                    <Button
+                        type="button"
+                        color="danger"
+                        onClick={handleSignOut}
+                        disabled={isLoggingOut}
+                    >
+                        {isLoggingOut ? (
+                            renderButtonLoader()
+                        ) : (
+                            <>
+                                <i className="fa fa-power-off mr-1"></i> Logout
+                            </>
+                        )}
+                    </Button>
+                </Col>
+            </Row>
+            <Form onSubmit={handleSubmit}>
+                <Row className="mb-4">
+                    <Col md="8">
+                        <Input
                             value={todoText}
                             onChange={handleTodoTextChange}
+                            placeholder="Enter todo task..."
                             required
                         />
-                    </div>
-                    <div className="col-md-2">
+                    </Col>
+                    <Col md="2">
                         <select
                             className="form-control"
                             value={priority}
                             onChange={handlePriorityChange}
                         >
-                            {getPriorityList()}
+                            {renderPriorityOptionsList()}
                         </select>
-                    </div>
-                    <div className="col-md-2">
-                        <button
-                            className="btn btn-primary ml-1"
+                    </Col>
+                    <Col md="2">
+                        <Button
+                            type="submit"
+                            color="primary"
                             disabled={requestSubmitting}
                         >
-                            {requestSubmitting ? (
-                                <span
-                                    className="spinner-border spinner-border-sm"
-                                    role="status"
-                                    aria-hidden="true"
-                                ></span>
-                            ) : selectedTodoId ? (
-                                "Update Todo"
-                            ) : (
-                                "Add Todo"
-                            )}
-                        </button>
-                    </div>
-                </div>
-            </form>
-            <div className="row">
-                <div className="col-md-12">
+                            {requestSubmitting
+                                ? renderButtonLoader()
+                                : isEditMode()
+                                ? "Update Todo"
+                                : "Add Todo"}
+                        </Button>
+                    </Col>
+                </Row>
+            </Form>
+            <Row>
+                <Col md="12">
                     <TodoList
                         data={todoList}
                         selectedTodoId={selectedTodoId}
@@ -223,9 +242,9 @@ const Todo = (props) => {
                         onDelete={handleDeleteTodo}
                         fetching={fetching}
                     />
-                </div>
-            </div>
-        </div>
+                </Col>
+            </Row>
+        </Container>
     );
 };
 
