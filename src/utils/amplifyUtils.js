@@ -1,6 +1,11 @@
 import Amplify, { API, Auth, graphqlOperation, Hub } from "aws-amplify";
-import { Priority } from "../constants";
-import { createTodo, deleteTodo, updateItem } from "../graphql/mutations";
+import { Priority, Status } from "../constants";
+import {
+    createTodo,
+    deleteTodo,
+    markCompleted,
+    updateItem,
+} from "../graphql/mutations";
 import { listTodos, listTodosByPriority } from "../graphql/queries";
 import {
     onCreateTodo,
@@ -19,12 +24,21 @@ export const getCurrentUser = () => {
 
 export const getSortedTodoListingByPriorityQuery = (sortDirection) => {
     return API.graphql(
-        graphqlOperation(listTodosByPriority, { type: "Todo", sortDirection })
+        graphqlOperation(listTodosByPriority, {
+            filter: { status: { eq: Status.PENDING } },
+            type: "Todo",
+            sortDirection,
+        })
     );
 };
 
-export const getTodoListingQuery = () => {
-    return API.graphql(graphqlOperation(listTodos));
+export const getTodoListingQuery = (status) => {
+    return API.graphql(
+        graphqlOperation(
+            listTodos,
+            status && { filter: { status: { eq: status } } }
+        )
+    );
 };
 
 export const createTodoQuery = (data) => {
@@ -34,6 +48,7 @@ export const createTodoQuery = (data) => {
                 type: "Todo",
                 todo: data.todo,
                 priority: data.priority || Priority.NORMAL,
+                status: Status.PENDING,
             },
         })
     );
@@ -51,6 +66,10 @@ export const updateTodoQuery = (id, data) => {
             priority: data.priority,
         })
     );
+};
+
+export const markCompletedQuery = (id) => {
+    return API.graphql(graphqlOperation(markCompleted, { id }));
 };
 
 export const createTodoSubscription = (owner, cb) => {

@@ -6,13 +6,21 @@ import {
     deleteTodoSubscription,
     getCurrentUser,
     getSortedTodoListingByPriorityQuery,
+    getTodoListingQuery,
+    markCompletedQuery,
     signOut,
     updateTodoQuery,
     updateTodoSubscription,
 } from "../../utils/amplifyUtils";
 import TodoList from "./TodoList";
-import { Priority, SortDirection } from "../../constants";
-import { Button, Col, Container, Form, Input, Row } from "reactstrap";
+import { Priority, SortDirection, Status } from "../../constants";
+import { Button, Col, Container, Form, Row } from "reactstrap";
+import Styled from "styled-components";
+import { CustomButton } from "../../components/Button";
+import { AppHeader } from "../../components/Header";
+import { CustomInput } from "../../components/Input";
+
+const Heading = Styled.h2``;
 
 const Todo = (props) => {
     const [todoText, setTodoText] = useState("");
@@ -22,12 +30,16 @@ const Todo = (props) => {
     const [requestSubmitting, setRequestSubmitting] = useState(false);
     const [priority, setPriority] = useState(Priority.NORMAL);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [completedTodoList, setCompletedTodoList] = useState([]);
+    const [completedTodoFetching, setCompletedTodoFetching] = useState(false);
+    const [actionLoaders, setActionLoaders] = useState({});
 
     const [user, setUser] = useState(null);
 
     useEffect(() => {
         getUser();
         getTodoList();
+        getCompletedTodoList();
     }, []);
 
     useEffect(() => {
@@ -35,6 +47,15 @@ const Todo = (props) => {
             const createTodoListener = createTodoSubscription(
                 user.username,
                 (todo) => {
+                    setActionLoaders((prev) => {
+                        const newData = { ...prev };
+                        newData[todo.id] = {
+                            isEditing: false,
+                            isDeleting: false,
+                            isCompleting: false,
+                        };
+                        return newData;
+                    });
                     setTodoList((prev) => [...prev, todo]);
                 }
             );
@@ -87,10 +108,32 @@ const Todo = (props) => {
             );
             const todos = result.data.listTodosByPriority.items;
             setTodoList(todos);
+            const actionLoadersData = {};
+            todos.forEach((todo) => {
+                actionLoadersData[todo.id] = {
+                    isEditing: false,
+                    isDeleting: false,
+                    isCompleting: false,
+                };
+            });
+            setActionLoaders(actionLoadersData);
         } catch (err) {
             console.log(err);
         } finally {
             setFetching(false);
+        }
+    };
+
+    const getCompletedTodoList = async () => {
+        setCompletedTodoFetching(true);
+        try {
+            const result = await getTodoListingQuery(Status.COMPLETED);
+            const completedTodos = result.data.listTodos.items;
+            setCompletedTodoList(completedTodos);
+        } catch (err) {
+            console.log(err);
+        } finally {
+            setCompletedTodoFetching(false);
         }
     };
 
@@ -121,10 +164,52 @@ const Todo = (props) => {
     const handlePriorityChange = (e) => setPriority(e.target.value);
 
     const handleDeleteTodo = async (id) => {
+        setDeletingLoader(id, true);
         try {
             await deleteTodoQuery(id);
         } catch (err) {
             console.log(err);
+        } finally {
+            setDeletingLoader(id, false);
+        }
+    };
+
+    const handleMarkCompleted = async (id) => {
+        setCompletingLoader(id, true);
+        try {
+            const data = await markCompletedQuery(id);
+            const result = data.data.markCompleted;
+            const todos = [
+                ...completedTodoList,
+                {
+                    id: result.id,
+                    todo: result.todo,
+                    priority: result.priority,
+                    status: result.status,
+                    __isNew: true,
+                },
+            ];
+            const pendingTodos = [...todoList].filter(
+                (todo) => todo.id !== result.id
+            );
+            setCompletedTodoList(todos);
+            setTodoList(pendingTodos);
+            setTimeout(() => {
+                setCompletedTodoList((prev) => {
+                    const updatedTodos = [...prev];
+                    const updatedTodo = updatedTodos.find(
+                        (t) => t.id === result.id
+                    );
+                    if (updatedTodo?.__isNew) {
+                        delete updatedTodo.__isNew;
+                    }
+                    return updatedTodos;
+                });
+            }, 500);
+        } catch (err) {
+            console.log(err);
+        } finally {
+            setCompletingLoader(id, false);
         }
     };
 
@@ -139,11 +224,36 @@ const Todo = (props) => {
         }
     };
 
+    const setEditingLoader = (id, value) => {
+        setActionLoaders((prev) => {
+            const newData = { ...prev };
+            newData[id].isEditing = value;
+            return newData;
+        });
+    };
+
+    const setDeletingLoader = (id, value) => {
+        setActionLoaders((prev) => {
+            const newData = { ...prev };
+            newData[id].isDeleting = value;
+            return newData;
+        });
+    };
+
+    const setCompletingLoader = (id, value) => {
+        setActionLoaders((prev) => {
+            const newData = { ...prev };
+            newData[id].isCompleting = value;
+            return newData;
+        });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setRequestSubmitting(true);
         try {
-            if (selectedTodoId) {
+            if (isEditMode()) {
+                setEditingLoader(selectedTodoId, true);
                 const result = await updateTodoQuery(selectedTodoId, {
                     todo: todoText,
                     priority,
@@ -155,6 +265,7 @@ const Todo = (props) => {
                 updatedTodo.todo = result.data.updateItem.todo;
                 updatedTodo.priority = result.data.updateItem.priority;
 
+                setEditingLoader(selectedTodoId, false);
                 setSelectedTodoId(null);
                 setTodoText("");
                 setTodoList(newTodos);
@@ -177,13 +288,10 @@ const Todo = (props) => {
     return (
         <Container>
             <Row className="mb-4">
-                <Col
-                    xs="12"
-                    className="text-center bg-light d-flex justify-content-between align-items-center mt-2"
-                >
+                <AppHeader xs="12" className="bg-light">
                     <div></div>
-                    <h2>Amplify Todo App</h2>
-                    <Button
+                    <Heading>Amplify Todo App</Heading>
+                    <CustomButton
                         type="button"
                         color="danger"
                         onClick={handleSignOut}
@@ -196,13 +304,13 @@ const Todo = (props) => {
                                 <i className="fa fa-power-off mr-1"></i> Logout
                             </>
                         )}
-                    </Button>
-                </Col>
+                    </CustomButton>
+                </AppHeader>
             </Row>
             <Form onSubmit={handleSubmit}>
                 <Row className="mb-4">
                     <Col md="8">
-                        <Input
+                        <CustomInput
                             value={todoText}
                             onChange={handleTodoTextChange}
                             placeholder="Enter todo task..."
@@ -233,14 +341,32 @@ const Todo = (props) => {
                     </Col>
                 </Row>
             </Form>
-            <Row>
+            <Row className="mb-4">
                 <Col md="12">
+                    <h4 className="mb-4 text-center">Pending:</h4>
                     <TodoList
                         data={todoList}
                         selectedTodoId={selectedTodoId}
                         onSelectionChange={setSelectedTodoId}
                         onDelete={handleDeleteTodo}
+                        onMarkCompleted={handleMarkCompleted}
                         fetching={fetching}
+                        actionLoadersData={actionLoaders}
+                        renderActionButtons
+                        renderPriority
+                    />
+                </Col>
+            </Row>
+            <hr className="my-2" />
+            <Row className="mt-4">
+                <Col md="12">
+                    <h4 className="mb-4 text-center">Completed:</h4>
+                    <TodoList
+                        data={completedTodoList}
+                        fetching={completedTodoFetching}
+                        renderActionButtons={false}
+                        renderPriority={false}
+                        renderStatus
                     />
                 </Col>
             </Row>

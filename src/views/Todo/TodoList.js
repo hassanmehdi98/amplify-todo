@@ -3,7 +3,17 @@ import { ListGroup, Spinner } from "reactstrap";
 import TodoListItem from "./TodoListItem";
 
 const TodoList = (props) => {
-    const { data, onDelete, onSelectionChange, fetching } = props;
+    const {
+        data,
+        onDelete,
+        onSelectionChange,
+        onMarkCompleted,
+        fetching,
+        actionLoadersData,
+        renderActionButtons = true,
+        renderPriority = true,
+        renderStatus = false,
+    } = props;
 
     const renderLoader = () => (
         <div className="text-center">
@@ -27,8 +37,14 @@ const TodoList = (props) => {
                     id={item.id}
                     todo={item.todo}
                     priority={item.priority}
+                    isNew={item.__isNew}
                     onEdit={onSelectionChange}
                     onDelete={onDelete}
+                    onMarkCompleted={onMarkCompleted}
+                    renderActionButtons={renderActionButtons}
+                    renderPriority={renderPriority}
+                    renderStatus={renderStatus}
+                    actionLoadersData={actionLoadersData}
                 />
             ))}
         </ListGroup>

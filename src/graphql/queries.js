@@ -8,6 +8,7 @@ export const getTodo = /* GraphQL */ `
       todo
       priority
       type
+      status
       createdAt
       updatedAt
       owner
@@ -26,6 +27,7 @@ export const listTodos = /* GraphQL */ `
         todo
         priority
         type
+        status
         createdAt
         updatedAt
         owner
@@ -56,6 +58,7 @@ export const listTodosByPriority = /* GraphQL */ `
         todo
         priority
         type
+        status
         createdAt
         updatedAt
         owner

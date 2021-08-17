@@ -10,6 +10,7 @@ type Todo
     todo: String!
     priority: Priority!
     type: String!
+    status: Status!
 }
 
 enum Priority {
@@ -17,13 +18,21 @@ enum Priority {
     NORMAL
 }
 
+enum Status {
+    PENDING
+    COMPLETED
+}
+
 type UpdateItemResult {
     id: String
     todo: String
     priority: String
+    status: String
 }
 
 type Mutation {
     updateItem(id: String!, todo: String, priority: Priority): UpdateItemResult
         @function(name: "amplifytodoUpdateItem-${env}")
+    markCompleted(id: String!): UpdateItemResult
+        @function(name: "amplifytodoMarkCompleted-${env}")
 }

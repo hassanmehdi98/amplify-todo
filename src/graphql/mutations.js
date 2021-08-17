@@ -7,6 +7,17 @@ export const updateItem = /* GraphQL */ `
       id
       todo
       priority
+      status
+    }
+  }
+`;
+export const markCompleted = /* GraphQL */ `
+  mutation MarkCompleted($id: String!) {
+    markCompleted(id: $id) {
+      id
+      todo
+      priority
+      status
     }
   }
 `;
@@ -20,6 +31,7 @@ export const createTodo = /* GraphQL */ `
       todo
       priority
       type
+      status
       createdAt
       updatedAt
       owner
@@ -36,6 +48,7 @@ export const updateTodo = /* GraphQL */ `
       todo
       priority
       type
+      status
       createdAt
       updatedAt
       owner
@@ -52,6 +65,7 @@ export const deleteTodo = /* GraphQL */ `
       todo
       priority
       type
+      status
       createdAt
       updatedAt
       owner

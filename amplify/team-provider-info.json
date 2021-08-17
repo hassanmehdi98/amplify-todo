@@ -19,6 +19,10 @@
         "amplifytodoUpdateItem": {
           "deploymentBucketName": "amplify-amplifytodo-dev-120219-deployment",
           "s3Key": "amplify-builds/amplifytodoUpdateItem-4d6c5048622f32663667-build.zip"
+        },
+        "amplifytodoMarkCompleted": {
+          "deploymentBucketName": "amplify-amplifytodo-dev-120219-deployment",
+          "s3Key": "amplify-builds/amplifytodoMarkCompleted-657a7765616278315670-build.zip"
         }
       }
     }

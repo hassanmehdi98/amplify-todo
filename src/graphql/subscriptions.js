@@ -8,6 +8,7 @@ export const onCreateTodo = /* GraphQL */ `
       todo
       priority
       type
+      status
       createdAt
       updatedAt
       owner
@@ -21,6 +22,7 @@ export const onUpdateTodo = /* GraphQL */ `
       todo
       priority
       type
+      status
       createdAt
       updatedAt
       owner
@@ -34,6 +36,7 @@ export const onDeleteTodo = /* GraphQL */ `
       todo
       priority
       type
+      status
       createdAt
       updatedAt
       owner
