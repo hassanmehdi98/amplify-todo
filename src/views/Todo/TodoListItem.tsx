@@ -3,7 +3,21 @@ import { Button, Col, ListGroupItem, Row, Tooltip } from "reactstrap";
 import { Priority, Status } from "../../constants";
 import { getConstantColorStyle } from "../../utils/commonUtils";
 
-const getIconForPriority = (priority) => {
+export type TodoListItemProps = {
+    id: string;
+    todo: string;
+    priority: string;
+    onEdit?: Function;
+    onDelete?: Function;
+    onMarkCompleted?: Function;
+    renderActionButtons?: boolean;
+    renderPriority?: boolean;
+    renderStatus?: boolean;
+    actionLoadersData: any;
+    isNew?: boolean;
+};
+
+const getIconForPriority = (priority: any): JSX.Element => {
     const icons = {
         [Priority.HIGH]: "fa fa-arrow-up mr-1",
         [Priority.NORMAL]: "fa fa-arrow-down mr-1",
@@ -12,7 +26,7 @@ const getIconForPriority = (priority) => {
     return <i className={icons[priority]}></i>;
 };
 
-const renderButtonLoader = () => (
+const renderButtonLoader = (): JSX.Element => (
     <span
         className="spinner-border spinner-border-sm"
         role="status"
@@ -20,7 +34,7 @@ const renderButtonLoader = () => (
     ></span>
 );
 
-const TodoListItem = (props) => {
+const TodoListItem = (props: TodoListItemProps) => {
     const {
         id,
         todo,
@@ -35,9 +49,9 @@ const TodoListItem = (props) => {
         actionLoadersData,
     } = props;
 
-    const [tooltipOpen, setToolTipOpen] = useState(false);
+    const [tooltipOpen, setToolTipOpen] = useState<boolean>(false);
 
-    const toggle = () => setToolTipOpen(!tooltipOpen);
+    const toggle = (): void => setToolTipOpen(!tooltipOpen);
 
     return (
         <ListGroupItem style={isNew ? { backgroundColor: "#ccffcc" } : {}}>
@@ -65,7 +79,11 @@ const TodoListItem = (props) => {
                         <Button
                             color="primary"
                             size="sm"
-                            onClick={() => onEdit(id)}
+                            onClick={() => {
+                                if (onEdit) {
+                                    onEdit(id);
+                                }
+                            }}
                         >
                             {actionLoadersData[id].isEditing ? (
                                 renderButtonLoader()
@@ -77,7 +95,11 @@ const TodoListItem = (props) => {
                             color="danger"
                             size="sm"
                             className="ml-1"
-                            onClick={() => onDelete(id)}
+                            onClick={() => {
+                                if (onDelete) {
+                                    onDelete(id);
+                                }
+                            }}
                         >
                             {actionLoadersData[id].isDeleting ? (
                                 renderButtonLoader()
@@ -90,7 +112,11 @@ const TodoListItem = (props) => {
                             color="success"
                             size="sm"
                             className="ml-1"
-                            onClick={() => onMarkCompleted(id)}
+                            onClick={() => {
+                                if (onMarkCompleted) {
+                                    onMarkCompleted(id);
+                                }
+                            }}
                         >
                             {actionLoadersData[id].isCompleting ? (
                                 renderButtonLoader()
