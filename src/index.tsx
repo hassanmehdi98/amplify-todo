@@ -4,9 +4,9 @@ import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { initializeAmplify } from "./utils/amplifyUtils";
+import { AmplifyUtils } from "./utils/amplify";
 
-initializeAmplify();
+AmplifyUtils.Init();
 
 ReactDOM.render(
     <React.StrictMode>
